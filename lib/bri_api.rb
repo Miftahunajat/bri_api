@@ -24,6 +24,38 @@ class BriApi
     JSON.parse(response.body)['Data']
   end
 
+  # @params :institution_code [string]
+  # @params :briva_no [string]
+  # @params :cust_code [string]
+  # @params :name [string]
+  # @params :amount [string]
+  # @params :keterangan [string]
+  # @params :expiredDate [numeric]
+  def create_briva_endpoint(params)
+    params[:description] ||= ""
+    params[:expired_days] ||= 1
+    data = {
+    	"institutionCode": params[:institution_code],
+	    "brivaNo": params[:briva_no],
+	    "custCode": params[:cust_code],
+	    "nama": params[:name],
+	    "amount": params[:amount],
+	    "keterangan": params[:description],
+	    "expiredDate": (Date.today + params[:expired_days]).strftime("%F %H:%M:%S")
+    }
+    response = post_request('/sandbox/v1/briva',data)
+    JSON.parse response.body
+  end
+
+  # @params :cust_code [string]
+  # @params :briva_no [string]
+  # @params :custCode [string]
+  def get_briva_status(params)
+    params[:url] ||= @url
+    response = get_request('/v1/briva/' + params[:institution_code] + '/' + params[:briva_no] + '/' + params[:cust_code], params)
+    JSON.parse response.body
+  end
+
   private
 
   def get_request(path, params)

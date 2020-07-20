@@ -1,40 +1,27 @@
+require 'faraday'
+require 'json'
+require 'time'
+
 class BriApi
   attr_accessor :signature, :timestamp, :fullpath, :token, :timestamp
 
-  def initialize
+  # @params :id_key [string]
+  # @params :secret_key [string]
+  def initialize(params)
     @url = 'https://sandbox.partner.api.bri.co.id'
     @get_url = 'https://partner.api.bri.co.id'
 
-    @ID_KEY='ZuUyA2Ykz2pEaID8KMM7WIQKYI7La1sc'
-    @SECRET_KEY='4IBk0c3TNLK6ckaj'
+    @ID_KEY = params[:id_key]
+    @SECRET_KEY = params[:secret_key]
   end
 
   # @params :url [string]
-  # @params :account_number [strget_account_infoing]
+  # @params :account_number [string]
   def get_account_info(params)
     params[:url] ||= @url
     path = '/sandbox/v2/inquiry/' + params[:account_number]
     response = get_request(path, params)
-    JSON.parse(response)['Data']
-  end
-
-  def create_briva_endpoint(nama,  amount, custCode = '3456789200', keterangan = "")
-    data = {
-    	"institutionCode": "J104408",
-	    "brivaNo": "77777",
-	    "custCode": custCode,
-	    "nama": nama,
-	    "amount": amount,
-	    "keterangan": keterangan,
-	    "expiredDate": 1.days.from_now.strftime("%F %H:%M:%S")
-    }
-    response = post_request('/sandbox/v1/briva',data)
-    JSON.parse response.body
-  end
-
-  def get_briva_status(custCode = '3456789200')
-    response = get_request('/v1/briva/J104408/77777/' + custCode,@url)
-    JSON.parse response.body
+    JSON.parse(response.body)['Data']
   end
 
   private
@@ -42,7 +29,7 @@ class BriApi
   def get_request(path, params)
     @signature = get_signature(path, 'GET', '')
     @fullpath = params[:url] + path
-    response = connection.get(base_url + path) do |r|
+    response = connection.get(@fullpath) do |r|
       r.headers['Authorization'] = 'Bearer ' + @token
       r.headers['BRI-Signature'] = @signature
       r.headers['BRI-TIMESTAMP'] = @timestamp
@@ -93,7 +80,7 @@ class BriApi
     connection = Faraday.new(:url => @url) do |c|
       c.use Faraday::Request::UrlEncoded
       c.use Faraday::Response::Logger
-      c.use Faraday::Adapter::NetHttp
+      c.adapter Faraday::Adapter::NetHttp
       connection
     end
   end
